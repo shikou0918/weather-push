@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "weatherpush-starter",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/weatherpush",
+            "cwd": "${workspaceFolder}",
+            "envFile": "${workspaceFolder}/.env",
+        }
+    ]
+  }
+  
