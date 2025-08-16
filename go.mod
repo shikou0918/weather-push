@@ -1,3 +1,3 @@
 module github.com/shikou0918/weather-push
 
-go 1.22
+go 1.25
