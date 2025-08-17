@@ -1,12 +1,8 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
-	"time"
 
 	"github.com/shikou0918/weather-push/request"
 )
