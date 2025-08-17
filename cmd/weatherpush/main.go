@@ -21,32 +21,6 @@ func mustGetenv(key string) string {
 	return val
 }
 
-// ===== LINE Messaging API (Push) =====
-func pushLine(channelAccessToken, userID, text string) error {
-	body := map[string]any{
-		"to": userID,
-		"messages": []map[string]any{
-			{"type": "text", "text": text},
-		},
-	}
-	b, _ := json.Marshal(body)
-	req, _ := http.NewRequest(http.MethodPost, "https://api.line.me/v2/bot/message/push", bytes.NewReader(b))
-	req.Header.Set("Authorization", "Bearer "+channelAccessToken)
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return fmt.Errorf("line push http error: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode >= 300 {
-		return fmt.Errorf("line push failed: status=%d", resp.StatusCode)
-	}
-	return nil
-}
-
 func main() {
 	// 必須環境変数
 	appID := mustGetenv("YAHOO_CLIENT_ID") // Yahoo!デベロッパーネットワークのアプリケーションID
@@ -81,7 +55,7 @@ func main() {
 	)
 
 	// LINE Push
-	if err := pushLine(lineToken, lineUserID, msg); err != nil {
+	if err := request.PushLine(lineToken, lineUserID, msg); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
