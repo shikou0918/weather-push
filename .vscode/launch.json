@@ -2,11 +2,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "weatherpush-starter",
+            "name": "weathe-push",
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "program": "${workspaceFolder}/cmd/weatherpush",
+            "program": "${workspaceFolder}/cmd/weather_push",
             "cwd": "${workspaceFolder}",
             "envFile": "${workspaceFolder}/.env",
         }
