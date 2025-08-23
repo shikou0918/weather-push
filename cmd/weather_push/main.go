@@ -8,11 +8,10 @@ import (
 )
 
 const (
-	TokyoAreaCode = "130000"
+	TokyoAreaCode   = "130000"
 	SaitamaAreaCode = "110000"
 )
 
-// ===== 共通ユーティリティ =====
 func mustGetenv(key string) string {
 	val := os.Getenv(key)
 	if val == "" {
@@ -32,6 +31,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+		fmt.Println("OK: pushed.", lines)
 
 	// メッセージ組み立て
 	msg := fmt.Sprintf("【%sの情報（観測/予報）】\n%s\n（毎朝7:00配信）",
@@ -49,8 +49,6 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-
-	fmt.Println("OK: pushed.")
 }
 
 // ユーティリティ：先頭にプレフィクスを入れて結合

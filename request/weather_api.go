@@ -7,6 +7,10 @@ import (
 	"time"
 )
 
+const (
+	TokyoArea   = "東京地方"
+)
+
 // 気象庁APIのレスポンス
 type ForecastResponse []struct {
 	ReportDatetime string       `json:"reportDatetime"`
@@ -54,14 +58,19 @@ func FetchJMAWeather(areaCode string) ([]string, error) {
 		return nil, fmt.Errorf("jma weather: empty response")
 	}
 
-	// 例として最初のタイムシリーズ（天気予報）だけを抜き出す
 	ts := fr[0].TimeSeries[0]
 	var lines []string
 	for i, t := range ts.TimeDefines {
-		// 各エリアの天気をまとめる（とりあえず最初のエリア）
-		if len(ts.Areas) > 0 && i < len(ts.Areas[0].Weathers) {
-			weather := ts.Areas[0].Weathers[i]
-			lines = append(lines, fmt.Sprintf("%s: %s", t, weather))
+		// Areasから「東京地方」だけを取得
+		for _, area := range ts.Areas {
+			if area.AreaInfo.Name == TokyoArea {
+				if i < len(area.Weathers) {
+					weather := area.Weathers[i]
+					timeParsed, _ := time.Parse(time.RFC3339, t)
+					lines = append(lines,
+						fmt.Sprintf("%s: %s", timeParsed.Format("2006/01/02 (Mon) 15:04"), weather))
+				}
+			}
 		}
 	}
 
