@@ -8,7 +8,8 @@ import (
 )
 
 const (
-  TokyoAreaCode = "130000"
+	TokyoAreaCode = "130000"
+	SaitamaAreaCode = "110000"
 )
 
 // ===== 共通ユーティリティ =====
@@ -25,13 +26,7 @@ func main() {
 	lineToken := mustGetenv("LINE_CHANNEL_ACCESS_TOKEN")
 	lineUserID := mustGetenv("LINE_USER_ID")
 
-	// 任意（通知の見出し用）
-	place := os.Getenv("PLACE_NAME")
-	if place == "" {
-		place = "指定地点"
-	}
-
-	// Yahoo API から情報を取得
+	// 気象庁ホームページAPIから情報を取得
 	lines, err := request.FetchJMAWeather(TokyoAreaCode)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -40,7 +35,6 @@ func main() {
 
 	// メッセージ組み立て
 	msg := fmt.Sprintf("【%sの情報（観測/予報）】\n%s\n（毎朝7:00配信）",
-		place,
 		func() string {
 			max := 7
 			if len(lines) < max {

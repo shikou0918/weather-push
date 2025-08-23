@@ -7,23 +7,30 @@ import (
 	"time"
 )
 
-// 気象庁 API のレスポンス構造体（必要最低限に絞って定義）
+// 気象庁APIのレスポンス
 type ForecastResponse []struct {
-	PublishingOffice string `json:"publishingOffice"`
-	ReportDatetime   string `json:"reportDatetime"`
-	TimeSeries       []struct {
-		TimeDefines []string `json:"timeDefines"`
-		Areas       []struct {
-			Area struct {
-				Name string `json:"name"`
-				Code string `json:"code"`
-			} `json:"area"`
-			Weathers []string `json:"weathers"`
-		} `json:"areas"`
-	} `json:"timeSeries"`
+	ReportDatetime string       `json:"reportDatetime"`
+	TimeSeries     []TimeSeries `json:"timeSeries"`
 }
 
-// FetchJMAWeather は気象庁のAPIから天気予報を取得する
+// 時系列ごとの情報
+type TimeSeries struct {
+	TimeDefines []string `json:"timeDefines"`
+	Areas       []Area   `json:"areas"`
+}
+
+// 地域ごとの情報
+type Area struct {
+	AreaInfo AreaInfo `json:"area"`
+	Weathers []string `json:"weathers"`
+}
+
+type AreaInfo struct {
+	Name string `json:"name"`
+	Code string `json:"code"`
+}
+
+// 気象庁ホームページAPIから情報を取得
 func FetchJMAWeather(areaCode string) ([]string, error) {
 	base := fmt.Sprintf("https://www.jma.go.jp/bosai/forecast/data/forecast/%s.json", areaCode)
 
