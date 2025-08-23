@@ -1,37 +1,33 @@
-# name: daily-weather
+name: daily-weather
 
-# on:
-#   schedule:
-#     - cron: "0 22 * * *"  # UTC 22:00 = JST 7:00
-#   workflow_dispatch:      # 手動実行ボタン
+on:
+  schedule:
+    - cron: "0 22 * * *"
+  workflow_dispatch:
 
-# jobs:
-#   send:
-#     runs-on: ubuntu-latest
-#     permissions:
-#       contents: read
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
-#     steps:
-#       - name: Check out
-#         uses: actions/checkout@v4
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
 
-#       - name: Set up Go
-#         uses: actions/setup-go@v5
-#         with:
-#           go-version: "1.22.x"
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
 
-#       # ここはあなたのリポ構成に合わせて調整
-#       # 例）cmd/weatherpush に main.go がある場合:
-#       - name: Build
-#         run: go build -o bin/weatherpush ./cmd/weatherpush
+      - name: Build
+        run: go build -o bin/weather_push ./cmd/weather_push
 
-#       - name: Run (send weather)
-#         env:
-#           # Yahoo! 気象情報 API
-#           YAHOO_CLIENT_ID: ${{ secrets.YAHOO_CLIENT_ID }}
-#           LAT: ${{ secrets.LAT }}
-#           LON: ${{ secrets.LON }}
-#           # LINE Push
-#           LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
-#           LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
-#         run: ./bin/weatherpush
+      - name: Run (send weather)
+        env:
+          YAHOO_CLIENT_ID: ${{ secrets.YAHOO_CLIENT_ID }}
+          LAT: ${{ secrets.LAT }}
+          LON: ${{ secrets.LON }}
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+        run: ./bin/weather_push
