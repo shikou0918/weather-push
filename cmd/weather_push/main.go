@@ -7,6 +7,10 @@ import (
 	"github.com/shikou0918/weather-push/request"
 )
 
+const (
+  TokyoAreaCode = "130000"
+)
+
 // ===== 共通ユーティリティ =====
 func mustGetenv(key string) string {
 	val := os.Getenv(key)
@@ -18,10 +22,6 @@ func mustGetenv(key string) string {
 }
 
 func main() {
-	// 必須環境変数
-	appID := mustGetenv("YAHOO_CLIENT_ID") // Yahoo!デベロッパーネットワークのアプリケーションID
-	lat := mustGetenv("LAT")               // 例: 35.681236
-	lon := mustGetenv("LON")               // 例: 139.767125
 	lineToken := mustGetenv("LINE_CHANNEL_ACCESS_TOKEN")
 	lineUserID := mustGetenv("LINE_USER_ID")
 
@@ -32,7 +32,7 @@ func main() {
 	}
 
 	// Yahoo API から情報を取得
-	lines, err := request.FetchYahooWeather(appID, lat, lon)
+	lines, err := request.FetchJMAWeather(TokyoAreaCode)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
