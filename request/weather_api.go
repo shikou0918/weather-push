@@ -25,19 +25,9 @@ type TimeSeries struct {
 type Area struct {
 	AreaInfo     AreaInfo `json:"area"`
 	Weathers     []string `json:"weathers,omitempty"`
-	WeatherCodes []string `json:"weatherCodes,omitempty"`
-	Winds        []string `json:"winds,omitempty"`
-	Waves        []string `json:"waves,omitempty"`
+	Pops []string `json:"pops,omitempty"`
 
-	Pops []string `json:"pops,omitempty"` // 降水確率(%)
-
-	Temps         []string `json:"temps,omitempty"` // 短期の気温
-	TempsMin      []string `json:"tempsMin,omitempty"`
-	TempsMinUpper []string `json:"tempsMinUpper,omitempty"`
-	TempsMinLower []string `json:"tempsMinLower,omitempty"`
-	TempsMax      []string `json:"tempsMax,omitempty"`
-	TempsMaxUpper []string `json:"tempsMaxUpper,omitempty"`
-	TempsMaxLower []string `json:"tempsMaxLower,omitempty"`
+	Temps         []string `json:"temps,omitempty"`
 }
 
 type AreaInfo struct {
