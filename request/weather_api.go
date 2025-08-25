@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 )
 
 const (
-	TokyoArea = "東京地方" // 天気/降水確率のエリア名
-	TokyoCity = "東京"     // 気温のエリア名（配列ではこちらに入る）
+	TokyoArea = "東京地方" // 天気/降水確率
+	TokyoCity = "東京"   // 気温
 )
 
 type ForecastResponse []struct {
@@ -23,11 +24,10 @@ type TimeSeries struct {
 }
 
 type Area struct {
-	AreaInfo     AreaInfo `json:"area"`
-	Weathers     []string `json:"weathers,omitempty"`
-	Pops []string `json:"pops,omitempty"`
-
-	Temps         []string `json:"temps,omitempty"`
+	AreaInfo AreaInfo `json:"area"`
+	Weathers []string `json:"weathers,omitempty"`
+	Pops     []string `json:"pops,omitempty"`
+	Temps    []string `json:"temps,omitempty"`
 }
 
 type AreaInfo struct {
@@ -35,6 +35,27 @@ type AreaInfo struct {
 	Code string `json:"code"`
 }
 
+// ---- 1) 外からはこれだけ呼べばOK：本文まで完成させて返す ----
+func ComposeJMAReport(areaCode string, now time.Time) (string, error) {
+	// 各行（見出し + 項目行）を取得
+	lines, err := FetchJMAWeather(areaCode)
+	if err != nil {
+		return "", err
+	}
+	// 見出しの前に空行、項目は「・」で箇条書き
+	body := formatWithSectionBreaks(lines)
+
+	title := "東京地方の天気・降水確率・気温（観測/予報）"
+	msg := fmt.Sprintf(
+		"【%s】\n\n%s\n\n（毎朝7:00配信 / %s）",
+		title,
+		body,
+		now.Format("2006/01/02 15:04"),
+	)
+	return msg, nil
+}
+
+// ---- 2) データ取得＋見出し付きの行配列を返す（既存ロジック） ----
 func FetchJMAWeather(areaCode string) ([]string, error) {
 	base := fmt.Sprintf("https://www.jma.go.jp/bosai/forecast/data/forecast/%s.json", areaCode)
 
@@ -66,32 +87,26 @@ func FetchJMAWeather(areaCode string) ([]string, error) {
 		lines = append(lines, rows...)
 	}
 
-	// --- 短期ブロック（fr[0]）から必要なものを拾う ---
+	// 短期ブロック（fr[0]）
 	tsList := fr[0].TimeSeries
 
-	// 1) 天気（東京地方）: 単位なし
+	// 天気（東京地方）
 	if rows := extractTimeSeries(tsList, TokyoArea, func(a Area) ([]string, bool) { return a.Weathers, len(a.Weathers) > 0 }, ""); len(rows) > 0 {
 		appendSection("天気（東京地方）", rows)
 	}
-
-	// 2) 降水確率（東京地方）: 単位 %
+	// 降水確率（東京地方） ※%付与
 	if rows := extractTimeSeries(tsList, TokyoArea, func(a Area) ([]string, bool) { return a.Pops, len(a.Pops) > 0 }, "%"); len(rows) > 0 {
 		appendSection("降水確率（東京地方）", rows)
 	}
-
-	// 3) 気温（東京）: 単位 
+	// 気温（東京） ※℃付与
 	if rows := extractTimeSeries(tsList, TokyoCity, func(a Area) ([]string, bool) { return a.Temps, len(a.Temps) > 0 }, "℃"); len(rows) > 0 {
 		appendSection("気温（東京）", rows)
 	}
 
-	// ※ 週間の tempsMin/Max 等は fr[1] 側。必要になったら同じ仕組みで追加可能。
-
 	return lines, nil
 }
 
-// 指定したエリア名の時系列から、値スライスを取り出して「時刻: 値(+unit)」に整形して返す。
-// getter は Area から対象フィールド（Weathers/Pops/Temps など）を取り出す関数。
-// unit は "℃" や "%" を渡す。空なら付けない。
+// 値スライスを「時刻: 値(+unit)」に整形
 func extractTimeSeries(
 	tsList []TimeSeries,
 	areaName string,
@@ -99,7 +114,6 @@ func extractTimeSeries(
 	unit string,
 ) []string {
 	var out []string
-
 	for _, ts := range tsList {
 		// 該当エリアを探す
 		idx := -1
@@ -118,7 +132,7 @@ func extractTimeSeries(
 			continue
 		}
 
-		// timeDefines と values の短い方に合わせる
+		// timeDefines と values の短い方
 		n := len(ts.TimeDefines)
 		if len(values) < n {
 			n = len(values)
@@ -126,22 +140,44 @@ func extractTimeSeries(
 
 		for i := 0; i < n; i++ {
 			val := values[i]
-			if val == "" { // 空はスキップ（週間などで空が混じることがある）
+			if val == "" {
 				continue
 			}
 			if unit != "" {
-				val = val + unit
+				val += unit
 			}
-
 			tstr := ts.TimeDefines[i]
 			if parsed, err := time.Parse(time.RFC3339, tstr); err == nil {
-				// ここでは頭に "- " は付けない（main 側で「・」を付ける）
 				out = append(out, fmt.Sprintf("%s: %s", parsed.Format("2006/01/02 (Mon) 15:04"), val))
 			} else {
 				out = append(out, fmt.Sprintf("%s: %s", tstr, val))
 			}
 		}
 	}
-
 	return out
+}
+
+// 見出しの前に空行、項目は行頭「・」
+func formatWithSectionBreaks(lines []string) string {
+	if len(lines) == 0 {
+		return ""
+	}
+	var out []string
+	first := true
+	for _, l := range lines {
+		l = strings.TrimSpace(l)
+		if l == "" {
+			continue
+		}
+		if strings.HasPrefix(l, "【") {
+			if !first {
+				out = append(out, "")
+			}
+			out = append(out, l)
+			first = false
+		} else {
+			out = append(out, "・"+l)
+		}
+	}
+	return strings.Join(out, "\n")
 }
