@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	TokyoArea = "東京地方" // 天気/降水確率
-	TokyoCity = "東京"   // 気温
+	TokyoArea = "東京地方"
+	TokyoCity = "東京"
 )
 
 type ForecastResponse []struct {
@@ -35,14 +35,13 @@ type AreaInfo struct {
 	Code string `json:"code"`
 }
 
-// ---- 1) 外からはこれだけ呼べばOK：本文まで完成させて返す ----
 func ComposeJMAReport(areaCode string, now time.Time) (string, error) {
 	// 各行（見出し + 項目行）を取得
 	lines, err := FetchJMAWeather(areaCode)
 	if err != nil {
 		return "", err
 	}
-	// 見出しの前に空行、項目は「・」で箇条書き
+
 	body := formatWithSectionBreaks(lines)
 
 	title := "東京地方の天気・降水確率・気温（観測/予報）"
@@ -55,7 +54,6 @@ func ComposeJMAReport(areaCode string, now time.Time) (string, error) {
 	return msg, nil
 }
 
-// ---- 2) データ取得＋見出し付きの行配列を返す（既存ロジック） ----
 func FetchJMAWeather(areaCode string) ([]string, error) {
 	base := fmt.Sprintf("https://www.jma.go.jp/bosai/forecast/data/forecast/%s.json", areaCode)
 
@@ -87,18 +85,18 @@ func FetchJMAWeather(areaCode string) ([]string, error) {
 		lines = append(lines, rows...)
 	}
 
-	// 短期ブロック（fr[0]）
+	// 短期の気象情報を取得
 	tsList := fr[0].TimeSeries
 
 	// 天気（東京地方）
 	if rows := extractTimeSeries(tsList, TokyoArea, func(a Area) ([]string, bool) { return a.Weathers, len(a.Weathers) > 0 }, ""); len(rows) > 0 {
 		appendSection("天気（東京地方）", rows)
 	}
-	// 降水確率（東京地方） ※%付与
+	// 降水確率（東京地方）
 	if rows := extractTimeSeries(tsList, TokyoArea, func(a Area) ([]string, bool) { return a.Pops, len(a.Pops) > 0 }, "%"); len(rows) > 0 {
 		appendSection("降水確率（東京地方）", rows)
 	}
-	// 気温（東京） ※℃付与
+	// 気温（東京）
 	if rows := extractTimeSeries(tsList, TokyoCity, func(a Area) ([]string, bool) { return a.Temps, len(a.Temps) > 0 }, "℃"); len(rows) > 0 {
 		appendSection("気温（東京）", rows)
 	}
@@ -106,7 +104,6 @@ func FetchJMAWeather(areaCode string) ([]string, error) {
 	return lines, nil
 }
 
-// 値スライスを「時刻: 値(+unit)」に整形
 func extractTimeSeries(
 	tsList []TimeSeries,
 	areaName string,
@@ -132,7 +129,6 @@ func extractTimeSeries(
 			continue
 		}
 
-		// timeDefines と values の短い方
 		n := len(ts.TimeDefines)
 		if len(values) < n {
 			n = len(values)
@@ -157,7 +153,6 @@ func extractTimeSeries(
 	return out
 }
 
-// 見出しの前に空行、項目は行頭「・」
 func formatWithSectionBreaks(lines []string) string {
 	if len(lines) == 0 {
 		return ""
